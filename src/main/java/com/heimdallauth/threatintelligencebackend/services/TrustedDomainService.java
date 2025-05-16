@@ -33,13 +33,10 @@ public class TrustedDomainService {
     }
 
     @Scheduled(cron = "0 0 0 * * *")
+    @PostConstruct
     private void runMidnightMaintenance(){
         trancoListDownloader.downloadTrancoList();
-        long countOfRecords = trustedDomainRepository.count();
-        if(countOfRecords > 0){
-            log.info("Trusted domain data already loaded, skipping midnight maintenance");
-            return;
-        }
+        trustedDomainRepository.truncateTable();
         log.info("Running midnight maintenance");
         isDataLoading = true;
         //TODO perform Data load
