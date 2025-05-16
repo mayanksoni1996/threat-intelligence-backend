@@ -1,24 +1,26 @@
 package com.heimdallauth.threatintelligencebackend.services;
 
+import com.heimdallauth.threatintelligencebackend.config.ThreatIntelConfig;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
-import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Properties;
 
 @Service
 @Slf4j
 public class TrancoListDownloader {
     private static final String TRANCO_LIST_ID = "V9WWN"; // Replace with latest list ID
     private static final String TRANCO_URL = "https://tranco-list.eu/download/" + TRANCO_LIST_ID + "/csv";
-    static final Path TRANCO_DEST = Paths.get(System.getProperty("user.dir"), "tranco_top_1m.csv");
+    private final Path TRANCO_DEST;
+
+    public TrancoListDownloader(ThreatIntelConfig threatIntelConfig) {
+        this.TRANCO_DEST = Paths.get(threatIntelConfig.getTrancoListPath(), "tranco_top_1m.csv");
+    }
 
     @PostConstruct
     public void downloadTrancoList() {
@@ -33,5 +35,8 @@ public class TrancoListDownloader {
         } catch (IOException e) {
             log.error("❌ Failed to download Tranco list: " + e.getMessage());
         }
+    }
+    public InputStream readFile() throws IOException {
+        return Files.newInputStream(TRANCO_DEST);
     }
 }

@@ -5,6 +5,7 @@ RUN gradle build -x test
 
 FROM eclipse-temurin:21.0.6_7-jre-ubi9-minimal
 WORKDIR /app
+VOLUME /data/trusted
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV PUBLIC_FQDN=$COOLIFY_FQDN
 ENV ARTIFACTORY_PATH=build/libs/*.jar

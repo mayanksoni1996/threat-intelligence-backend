@@ -63,8 +63,7 @@ public class TrustedDomainService {
     private void processTrustedDomainRefresh() {
         log.info("Processing trusted domain refresh");
         try{
-            File csvFile = CSV_FILE;
-            List<TrancoCsvFileFormat> csvFormat = readCsvFile(TrancoCsvFileFormat.class, new BufferedInputStream(new FileInputStream( csvFile )));
+            List<TrancoCsvFileFormat> csvFormat = readCsvFile(TrancoCsvFileFormat.class, this.trancoListDownloader.readFile());
             if (csvFormat == null || csvFormat.isEmpty()) {
                 log.error("No data found in CSV file");
                 return;
