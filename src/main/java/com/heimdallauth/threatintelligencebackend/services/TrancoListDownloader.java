@@ -1,0 +1,35 @@
+package com.heimdallauth.threatintelligencebackend.services;
+
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+@Service
+@Slf4j
+public class TrancoListDownloader {
+    private static final String TRANCO_LIST_ID = "T3ZL"; // Replace with latest list ID
+    private static final String TRANCO_URL = "https://tranco-list.eu/download/" + TRANCO_LIST_ID + "/csv";
+    private static final Path DESTINATION = Paths.get("src/main/resources/tranco_top_1m.csv");
+
+    @PostConstruct
+    public void downloadTrancoList() {
+        try (BufferedInputStream in = new BufferedInputStream(new URL(TRANCO_URL).openStream());
+             FileOutputStream fileOutputStream = new FileOutputStream(DESTINATION.toFile())) {
+            byte[] dataBuffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+                fileOutputStream.write(dataBuffer, 0, bytesRead);
+            }
+            System.out.println("✅ Tranco list downloaded successfully.");
+        } catch (IOException e) {
+            System.err.println("❌ Failed to download Tranco list: " + e.getMessage());
+        }
+    }
+}
