@@ -22,12 +22,13 @@ import java.util.UUID;
 @Slf4j
 public class TrustedDomainService {
     private final TrustedDomainRepository trustedDomainRepository;
+    private final TrancoListDownloader trancoListDownloader;
     private static final CsvMapper CSV_MAPPER = new CsvMapper();
     private static final File CSV_FILE;
 
     static {
         try {
-            CSV_FILE = ResourceUtils.getFile("classpath:tranco.csv");
+            CSV_FILE = ResourceUtils.getFile("classpath:tranco_top_1m.csv");
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -36,12 +37,14 @@ public class TrustedDomainService {
     @Getter
     private boolean isDataLoading = false;
 
-    public TrustedDomainService(TrustedDomainRepository trustedDomainRepository) {
+    public TrustedDomainService(TrustedDomainRepository trustedDomainRepository, TrancoListDownloader trancoListDownloader) {
         this.trustedDomainRepository = trustedDomainRepository;
+        this.trancoListDownloader = trancoListDownloader;
     }
 
     @Scheduled(cron = "0 0 0 * * *")
     private void runMidnightMaintenance(){
+        trancoListDownloader.downloadTrancoList();
         long countOfRecords = trustedDomainRepository.count();
         if(countOfRecords > 0){
             log.info("Trusted domain data already loaded, skipping midnight maintenance");
