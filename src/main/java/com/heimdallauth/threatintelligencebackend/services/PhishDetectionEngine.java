@@ -1,7 +1,10 @@
 package com.heimdallauth.threatintelligencebackend.services;
 
 import com.heimdallauth.threatintelligencebackend.algo.EditDistance;
+import com.heimdallauth.threatintelligencebackend.constants.PhishingDetectionResult;
+import com.heimdallauth.threatintelligencebackend.entity.TrustedDomain;
 import com.heimdallauth.threatintelligencebackend.models.DomainCheckRequest;
+import com.heimdallauth.threatintelligencebackend.utils.DomainUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -12,17 +15,27 @@ import java.util.List;
 @Slf4j
 public class PhishDetectionEngine {
     //TODO Replace with cache
-    private static final List<String> KNOWN_DOMAINS = List.of(
-            "google.com",
-            "facebook.com",
-            "amazon.com"
-    );
-    public void calculateEditDistance(DomainCheckRequest domainCheckRequest){
+    private final TrustedDomainService trustedDomainService;
+
+    public PhishDetectionEngine(TrustedDomainService trustedDomainService) {
+        this.trustedDomainService = trustedDomainService;
+    }
+
+    public PhishingDetectionResult calculateEditDistance(DomainCheckRequest domainCheckRequest){
+        List<TrustedDomain> trustedDomainsByMatchingTld = trustedDomainService.getTrustedDomainsByTld(DomainUtils.getTldFromDomain(domainCheckRequest.domainUnderCheck()));
         List<Integer> editDistanceLists = new ArrayList<>();
-        String domainUnderTest = domainCheckRequest.domainUnderCheck();
-        for(String domain : KNOWN_DOMAINS){
-            editDistanceLists.add(EditDistance.calculateEditDistance(domainUnderTest, domain));
+        String domainUnderTest = domainCheckRequest.domainUnderCheck().toLowerCase();
+        for(TrustedDomain domain : trustedDomainsByMatchingTld){
+            editDistanceLists.add(EditDistance.calculateEditDistance(domainUnderTest, domain.getFullyQualifiedDomainName()));
         }
-        log.info("EditDistance calculated: " + editDistanceLists);
+        editDistanceLists.sort(Integer::compareTo);
+        int minEditDistance = editDistanceLists.getFirst();
+        if(minEditDistance == 0){
+            return PhishingDetectionResult.NOT_PHISHING;
+        }else if(minEditDistance <= 2){
+            return PhishingDetectionResult.POSSIBLE_PHISHING;
+        }else{
+            return PhishingDetectionResult.NOT_PHISHING;
+        }
     }
 }
